@@ -81,6 +81,10 @@ module RubyDevMeeting
       # e.g. "https://bugs.ruby-lang.org/issues/21009 Some title" -> "### [[#21009]](url) Some title"
       @content = convert_bare_ticket_urls(@content)
 
+      # Fix code fences that immediately follow list items without a blank line,
+      # which causes Kramdown to mis-parse the code block
+      @content = fix_list_code_fences(@content)
+
       # Extract date and title from filename
       parse_filename!
 
@@ -278,6 +282,13 @@ module RubyDevMeeting
           "### [[##{num}]](#{url})"
         end
       end
+    end
+
+    # Insert a blank line before code fences that immediately follow a list item.
+    # Without the blank line, Kramdown treats the fence as part of the list item
+    # and fails to parse the code block, producing broken HTML.
+    def fix_list_code_fences(content)
+      content.gsub(/^(\*\s.+)\n(```)/, "\\1\n\n\\2")
     end
 
     def filter_secrets(content)
