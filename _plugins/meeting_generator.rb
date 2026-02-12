@@ -64,6 +64,9 @@ module RubyDevMeeting
       # Filter [secret] sections
       @content = filter_secrets(@raw_content)
 
+      # Normalize alternate link format: [[Bug #123](url)] -> [[Bug #123]](url)
+      @content = normalize_ticket_links(@content)
+
       # Extract date and title from filename
       parse_filename!
 
@@ -130,13 +133,22 @@ module RubyDevMeeting
       # Build summary from the first few ticket/topic titles
       topics = []
       lines.each do |line|
-        if line =~ /\A###\s+.*#\d+.*?\]\].*?\s+(.*)/
-          topic = $1.strip.gsub(/\(.*?\)\s*$/, '').strip
-          topics << topic unless topic.empty?
-        elsif line =~ /\A###\s+(.+)/
-          topic = $1.strip
-          topics << topic unless topic.empty? || topic =~ /About release/i
-        end
+        next unless line =~ /\A###\s+(.+)/
+        heading = $1.strip
+
+        # Strip ticket references in all formats:
+        #   [[Feature #12345]](url)  - standard format
+        #   [[Bug #12345](url)]      - alternate format
+        #   [Feature #12345]         - plain format
+        topic = heading
+          .gsub(/\[\[(?:Feature|Bug|Misc|Discussion)\s*#\d+\]\]\([^)]*\)/, '')  # [[X #N]](url)
+          .gsub(/\[\[(?:Feature|Bug|Misc|Discussion)\s*#\d+\]\([^\]]*\)\]/, '') # [[X #N](url)]
+          .gsub(/\[(?:Feature|Bug|Misc|Discussion)\s*#\d+\](?:\([^)]*\))?/, '') # [X #N] or [X #N](url)
+          .gsub(/\(.*?\)\s*$/, '')  # trailing (author)
+          .strip
+
+        next if topic.empty? || topic =~ /\AAbout release/i
+        topics << topic
         break if topics.size >= 3
       end
 
@@ -196,6 +208,15 @@ module RubyDevMeeting
         .gsub(/&middot;/, '|')                      # html entity to separator
         .gsub(/\s+/, ' ')                           # normalize whitespace
         .strip
+    end
+
+    # Normalize alternate ticket link format to standard format
+    # [[Bug #123](url)] -> [[Bug #123]](url)
+    # This ensures Kramdown renders them consistently as proper links
+    def normalize_ticket_links(content)
+      content.gsub(/\[\[((?:Feature|Bug|Misc|Discussion)\s*#\d+)\]\(([^)]+)\)\]/) do
+        "[[#{$1}]](#{$2})"
+      end
     end
 
     def filter_secrets(content)
