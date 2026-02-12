@@ -1,7 +1,7 @@
 title: "Ruby Dev Meeting Archive"
 description: "Archive of Ruby core developer meeting logs"
-url: ""
-baseurl: ""
+url: "https://paracycle.github.io"
+baseurl: "/dev-meeting"
 
 markdown: kramdown
 kramdown:

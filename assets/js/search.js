@@ -11,17 +11,14 @@
   var searchClose = document.getElementById('search-close');
   var searchTriggers = document.querySelectorAll('.search-trigger');
   var activeIndex = -1;
+  var baseMeta = document.querySelector('meta[name="base-url"]');
+  var base = baseMeta ? baseMeta.getAttribute('content') : '';
 
   if (!searchOverlay || !searchInput || !searchResults) return;
 
   // Load search index
   function loadIndex() {
     if (searchIndex) return Promise.resolve(searchIndex);
-    var base = '';
-    var baseMeta = document.querySelector('meta[name="base-url"]');
-    if (baseMeta) {
-      base = baseMeta.getAttribute('content');
-    }
     return fetch(base + '/search-index.json')
       .then(function(r) { return r.json(); })
       .then(function(data) { searchIndex = data; return data; });
@@ -121,7 +118,7 @@
       var item = r.item;
       var snippet = cleanSnippet(getSnippet(item.content || item.summary || '', query));
 
-      html += '<a href="' + escapeHtml(item.url) + '"' +
+      html += '<a href="' + escapeHtml(base + item.url) + '"' +
         ' class="search-result block px-4 py-3 rounded-lg hover:bg-[var(--bg-subtle)] no-underline transition-colors outline-none focus:bg-[var(--bg-subtle)]"' +
         ' role="option" data-index="' + i + '"' +
         ' id="search-result-' + i + '">' +
