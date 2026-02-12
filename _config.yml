@@ -32,3 +32,4 @@ defaults:
       layout: "default"
 
 meeting_log_path: "dev-meeting-log"
+github_repo: "https://github.com/paracycle/dev-meeting"
