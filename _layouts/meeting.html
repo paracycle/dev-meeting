@@ -31,7 +31,7 @@ layout: default
       {% if meeting.ticket_count > 0 %}
       <span class="flex items-center gap-1">
         <span class="material-symbols-rounded text-base">confirmation_number</span>
-        {{ meeting.ticket_count }} ticket{{ meeting.ticket_count | minus: 1 | at_least: 1 }}{% if meeting.ticket_count != 1 %}s{% endif %} discussed
+        {{ meeting.ticket_count }} ticket{% if meeting.ticket_count != 1 %}s{% endif %} discussed
       </span>
       {% endif %}
 

@@ -5,3 +5,5 @@ _site/
 vendor/
 ruby-homepage/
 Gemfile.lock
+homepage-*.png
+page-*.png

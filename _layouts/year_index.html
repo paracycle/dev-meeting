@@ -16,7 +16,7 @@ layout: default
       {{ page.year }} Developer Meetings
     </h1>
     <p class="text-lg text-[var(--text-subtle)]">
-      {{ page.meeting_count }} meeting{{ page.meeting_count | minus: 1 | at_least: 1 }}{% if page.meeting_count != 1 %}s{% endif %} held this year
+      {{ page.meeting_count }} meeting{% if page.meeting_count != 1 %}s{% endif %} held this year
     </p>
   </header>
 

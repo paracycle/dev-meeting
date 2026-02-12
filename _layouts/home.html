@@ -39,7 +39,7 @@ layout: default
             {{ year_data.year }}
           </span>
           <span class="block text-sm text-[var(--text-subtle)] mt-1">
-            {{ year_data.count }} meeting{{ year_data.count | minus: 1 | at_least: 1 | times: 1 | plus: 0 }}{% if year_data.count != 1 %}s{% endif %}
+            {{ year_data.count }} meeting{% if year_data.count != 1 %}s{% endif %}
           </span>
         </a>
       {% endfor %}
