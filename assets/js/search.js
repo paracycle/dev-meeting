@@ -114,7 +114,7 @@
     var html = '<div class="space-y-1 search-results-enter">';
     results.forEach(function(r) {
       var item = r.item;
-      var snippet = getSnippet(item.content || item.summary || '', query);
+      var snippet = cleanSnippet(getSnippet(item.content || item.summary || '', query));
 
       html += '<a href="' + escapeHtml(item.url) + '" class="block px-4 py-3 rounded-lg hover:bg-[var(--bg-subtle)] no-underline transition-colors">' +
         '<div class="flex items-start justify-between gap-3">' +
@@ -155,6 +155,23 @@
     if (end < content.length) snippet = snippet + '...';
 
     return snippet;
+  }
+
+  // Clean a snippet of any remaining markdown artifacts
+  function cleanSnippet(text) {
+    return text
+      .replace(/\[{1,2}([^\]]+)\]{1,2}\([^)]*\)/g, '$1')  // [text](url) or [[text]](url)
+      .replace(/\[{1,2}([^\]]+)\]{1,2}/g, '$1')            // [[text]] or [text]
+      .replace(/`([^`]+)`/g, '$1')                          // `code` -> code
+      .replace(/#{1,6}\s*/g, '')                             // heading markers
+      .replace(/\*{1,2}([^*]+)\*{1,2}/g, '$1')             // bold/italic
+      .replace(/_{1,2}([^_]+)_{1,2}/g, '$1')               // bold/italic underscore
+      .replace(/~~([^~]+)~~/g, '$1')                        // strikethrough
+      .replace(/^\s*[-*+]\s+/gm, '')                        // list markers
+      .replace(/^\s*\d+\.\s+/gm, '')                        // numbered list markers
+      .replace(/^>\s*/gm, '')                                // blockquote markers
+      .replace(/\s+/g, ' ')                                  // normalize whitespace
+      .trim();
   }
 
   function highlightText(text, query) {
