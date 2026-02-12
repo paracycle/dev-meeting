@@ -77,6 +77,10 @@ module RubyDevMeeting
       # Fix unclosed double-bracket links: [[Bug #123](url) text -> [[Bug #123]](url) text
       @content = fix_unclosed_bracket_links(@content)
 
+      # Convert bare ticket URLs into proper headings
+      # e.g. "https://bugs.ruby-lang.org/issues/21009 Some title" -> "### [[#21009]](url) Some title"
+      @content = convert_bare_ticket_urls(@content)
+
       # Extract date and title from filename
       parse_filename!
 
@@ -132,6 +136,10 @@ module RubyDevMeeting
         line.scan(/\[\[(?:Feature|Bug|Misc|Discussion)\s*#(\d+)\]\]/).each do |match|
           @tickets << match[0]
         end
+        # Match bare ticket references like [[#12345]] (from converted bare URLs)
+        line.scan(/\[\[#(\d+)\]\]/).each do |match|
+          @tickets << match[0]
+        end
         # Also match plain issue references
         line.scan(/\[(?:Feature|Bug|Misc)\s*#(\d+)\](?!\()/).each do |match|
           @tickets << match[0]
@@ -152,6 +160,7 @@ module RubyDevMeeting
         #   [Feature #12345]         - plain format
         topic = heading
           .gsub(/\[\[(?:Feature|Bug|Misc|Discussion)\s*#\d+\]\]\([^)]*\)/, '')  # [[X #N]](url)
+          .gsub(/\[\[#\d+\]\]\([^)]*\)/, '')                                    # [[#N]](url) - bare ticket
           .gsub(/\[\[(?:Feature|Bug|Misc|Discussion)\s*#\d+\]\([^\]]*\)\]/, '') # [[X #N](url)]
           .gsub(/\[(?:Feature|Bug|Misc|Discussion)\s*#\d+\](?:\([^)]*\))?/, '') # [X #N] or [X #N](url)
           .gsub(/\(.*?\)\s*$/, '')  # trailing (author)
@@ -250,6 +259,24 @@ module RubyDevMeeting
     def normalize_ticket_links(content)
       content.gsub(/\[\[((?:Feature|Bug|Misc|Discussion)\s*#\d+)\]\(([^)]+)\)\]/) do
         "[[#{$1}]](#{$2})"
+      end
+    end
+
+    # Convert bare ticket URLs at the start of a line into ### headings
+    # "https://bugs.ruby-lang.org/issues/21009 Some title" -> "### [[#21009]](url) Some title"
+    # Skips the first occurrence (the meeting issue URL at the top of the file)
+    def convert_bare_ticket_urls(content)
+      first = true
+      content.gsub(/^(https:\/\/bugs\.ruby-lang\.org\/issues\/(\d+))([ \t]+(.+))?$/) do
+        url, num, _, title = $1, $2, $3, $4
+        if first
+          first = false
+          $&  # Leave the first occurrence unchanged
+        elsif title && !title.strip.empty?
+          "### [[##{num}]](#{url}) #{title.strip}"
+        else
+          "### [[##{num}]](#{url})"
+        end
       end
     end
 
