@@ -96,6 +96,10 @@ a:hover {
   color: var(--text-link-hover);
   text-decoration-color: currentColor;
 }
+a.no-underline,
+a.no-underline:hover {
+  text-decoration: none;
+}
 
 /* ============================================
    Meeting content prose styles
