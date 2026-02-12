@@ -6,9 +6,9 @@
       <h3 class="text-lg font-bold text-[var(--text-default)] group-hover:text-ruby-600 dark:group-hover:text-ruby-400 transition-colors">
         {{ m.title }}
       </h3>
-      {% if m.summary and m.summary != "" %}
-      <p class="text-sm text-[var(--text-subtle)] mt-1 line-clamp-2">
-        {{ m.summary }}
+      {% if m.summary_html and m.summary_html != "" %}
+      <p class="text-sm text-[var(--text-subtle)] mt-1 line-clamp-2 [&_code]:bg-[var(--code-bg)] [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_code]:font-mono [&_a]:text-[var(--text-link)]">
+        {{ m.summary_html }}
       </p>
       {% endif %}
     </div>

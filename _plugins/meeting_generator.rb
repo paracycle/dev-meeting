@@ -1,12 +1,14 @@
 require 'date'
 require 'yaml'
+require 'kramdown'
+require 'kramdown-parser-gfm'
 
 module RubyDevMeeting
   # Represents a single meeting log parsed from the dev-meeting-log repo
   class MeetingData
     attr_accessor :title, :date, :year, :month, :day, :slug, :lang, :content,
-                  :raw_content, :file_path, :url, :summary, :ticket_count,
-                  :tickets, :language_pair, :has_frontmatter
+                  :raw_content, :file_path, :url, :summary_html, :summary_plain,
+                  :ticket_count, :tickets, :language_pair, :has_frontmatter
 
     def initialize(file_path, base_path)
       @file_path = file_path
@@ -29,7 +31,8 @@ module RubyDevMeeting
         "slug" => @slug,
         "lang" => @lang,
         "url" => @url,
-        "summary" => @summary,
+        "summary_html" => @summary_html,
+        "summary_plain" => @summary_plain,
         "ticket_count" => @ticket_count,
         "tickets" => @tickets.first(5),
         "has_language_pair" => !@language_pair.nil?,
@@ -138,14 +141,61 @@ module RubyDevMeeting
       end
 
       if topics.any?
-        @summary = topics.join(" | ")
-        @summary = @summary[0..150] + "..." if @summary.length > 150
+        summary_md = topics.join(" &middot; ")
       else
         # Fallback: use first meaningful paragraph
         text_lines = lines.reject { |l| l.strip.empty? || l.start_with?('#') || l.start_with?('http') || l.start_with?('*') || l.start_with?('-') }
-        @summary = text_lines.first(2).map(&:strip).join(" ")[0..150]
-        @summary += "..." if @summary && @summary.length >= 150
+        summary_md = text_lines.first(2).map(&:strip).join(" ")
       end
+
+      summary_md ||= ""
+
+      # Truncate safely: avoid cutting inside backticks or brackets
+      if summary_md.length > 200
+        truncated = summary_md[0..200]
+        # Don't cut inside a backtick pair
+        if truncated.count('`').odd?
+          last_tick = truncated.rindex('`')
+          truncated = truncated[0...last_tick] if last_tick
+        end
+        # Don't cut inside brackets
+        if truncated.count('[') > truncated.count(']')
+          last_bracket = truncated.rindex('[')
+          truncated = truncated[0...last_bracket] if last_bracket
+        end
+        summary_md = truncated.rstrip + "..."
+      end
+
+      # Render markdown summary to inline HTML (strip wrapping <p> tags)
+      @summary_html = md_to_inline_html(summary_md)
+      # Also produce a plain text version for search
+      @summary_plain = strip_markdown(summary_md)
+    end
+
+    # Convert a short markdown string to inline HTML
+    def md_to_inline_html(md)
+      return "" if md.nil? || md.strip.empty?
+      html = Kramdown::Document.new(md, input: 'GFM').to_html.strip
+      # Remove wrapping <p>...</p> to keep it inline
+      html = html.sub(/\A<p>(.*)<\/p>\z/m, '\1')
+      html
+    end
+
+    # Strip markdown syntax to produce clean plain text
+    def strip_markdown(text)
+      text
+        .gsub(/```.*?```/m, '')                    # code blocks
+        .gsub(/`([^`]+)`/, '\1')                   # inline code -> content
+        .gsub(/`/, '')                             # stray backticks
+        .gsub(/\[\[([^\]]+)\]\]\(([^)]+)\)/, '\1') # [[text]](url) -> text
+        .gsub(/\[([^\]]+)\]\([^)]+\)/, '\1')       # [text](url) -> text
+        .gsub(/\[\[([^\]]+)\]\]/, '\1')             # [[text]] -> text
+        .gsub(/(?<!\w)[#*~>|]/, '')                # md chars (not mid-word)
+        .gsub(/(?<!\w)\*{1,2}|\*{1,2}(?!\w)/, '') # bold/italic asterisks
+        .gsub(/(?<=\s)_(?=\S)|(?<=\S)_(?=\s)/, '') # md emphasis underscores (not in identifiers)
+        .gsub(/&middot;/, '|')                      # html entity to separator
+        .gsub(/\s+/, ' ')                           # normalize whitespace
+        .strip
     end
 
     def filter_secrets(content)
@@ -320,7 +370,7 @@ module RubyDevMeeting
           "date" => m.date&.to_s,
           "year" => m.year,
           "url" => m.url,
-          "summary" => m.summary,
+          "summary" => m.summary_plain,
           "tickets" => m.tickets,
           "content" => plain_text[0..1500],
         }
