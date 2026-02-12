@@ -96,7 +96,7 @@ module RubyDevMeeting
         @date = Date.new(y, m, d)
         @month = m
         @day = d
-        @title = "DevMeeting #{@date.strftime('%Y-%m-%d')}"
+        @title = "#{@date.strftime('%b %Y')} Meeting"
         @slug = is_ja ? "#{@date.strftime('%m-%d')}-ja" : @date.strftime('%m-%d')
         @lang = "ja" if is_ja && !@has_frontmatter
       when /\ADevelopersMeeting(\d{4})(\d{2})(\d{2})Japan\z/
@@ -104,14 +104,14 @@ module RubyDevMeeting
         @date = Date.new(y, m, d)
         @month = m
         @day = d
-        @title = "DevMeeting #{@date.strftime('%Y-%m-%d')}"
+        @title = "#{@date.strftime('%b %Y')} Meeting"
         @slug = @date.strftime('%m-%d')
       when /\ADevCamp-(\d{2})-(\d{2})\z/
         m, d = $1.to_i, $2.to_i
         @date = Date.new(@year, m, d) rescue nil
         @month = m
         @day = d
-        @title = "DevCamp #{@year}-#{format('%02d', m)}-#{format('%02d', d)}"
+        @title = "#{@date&.strftime('%b')} #{@year} DevCamp"
         @slug = "devcamp-#{format('%02d', m)}-#{format('%02d', d)}"
       else
         @title = basename
@@ -345,6 +345,9 @@ module RubyDevMeeting
       # Detect language pairs (e.g., DevMeeting-2008-02-15 + DevMeeting-2008-02-15-JA)
       detect_language_pairs!(meetings)
 
+      # Disambiguate titles for months with multiple meetings
+      disambiguate_titles!(meetings)
+
       # Sort meetings by date descending
       all_sorted = meetings.sort_by { |m| m.date || Date.new(m.year, 1, 1) }.reverse
 
@@ -387,6 +390,27 @@ module RubyDevMeeting
     end
 
     private
+
+    def disambiguate_titles!(meetings)
+      # Group by year+month, and for months with multiple meetings
+      # (excluding JA translations), append "#1", "#2" etc.
+      by_month = {}
+      meetings.each do |m|
+        next unless m.date
+        next if m.lang == "ja" && m.language_pair  # Skip JA translations that have an EN pair
+        key = "#{m.year}-#{format('%02d', m.month)}"
+        by_month[key] ||= []
+        by_month[key] << m
+      end
+
+      by_month.each do |_key, ms|
+        next if ms.size < 2
+        ms.sort_by! { |m| m.date }
+        ms.each_with_index do |m, i|
+          m.title = "#{m.title} ##{i + 1}"
+        end
+      end
+    end
 
     def detect_language_pairs!(meetings)
       # Build a lookup by date + base slug
