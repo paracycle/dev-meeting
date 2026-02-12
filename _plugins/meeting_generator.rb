@@ -39,6 +39,7 @@ module RubyDevMeeting
         "has_language_pair" => !@language_pair.nil?,
         "language_pair_url" => @language_pair,
         "language_pair_lang" => @lang == "en" ? "ja" : "en",
+        "source_path" => @file_path.sub(@base_path + '/', ''),
       }
     end
 
