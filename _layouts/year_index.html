@@ -62,7 +62,7 @@ layout: default
       <span class="material-symbols-rounded text-ruby-600 dark:text-ruby-400">event</span>
       {{ month_group.month_name }}
       <span class="text-sm font-normal text-[var(--text-subtle)]">
-        ({{ month_group.meetings | size }} meeting{{ month_group.meetings | size | minus: 1 | at_least: 1 }}{% if month_group.meetings.size != 1 %}s{% endif %})
+        ({{ month_group.meetings | size }} meeting{% if month_group.meetings.size != 1 %}s{% endif %})
       </span>
     </h2>
     <div class="grid gap-3">
