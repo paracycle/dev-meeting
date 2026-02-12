@@ -1,4 +1,5 @@
 require 'date'
+require 'uri'
 require 'yaml'
 require 'kramdown'
 require 'kramdown-parser-gfm'
@@ -64,8 +65,17 @@ module RubyDevMeeting
       # Filter [secret] sections
       @content = filter_secrets(@raw_content)
 
+      # Unwrap Google Docs redirect URLs to their real targets
+      @content = unwrap_google_redirects(@content)
+
+      # Remove escaped brackets around markdown links: \[[text](url)\] -> [text](url)
+      @content = fix_escaped_bracket_links(@content)
+
       # Normalize alternate link format: [[Bug #123](url)] -> [[Bug #123]](url)
       @content = normalize_ticket_links(@content)
+
+      # Fix unclosed double-bracket links: [[Bug #123](url) text -> [[Bug #123]](url) text
+      @content = fix_unclosed_bracket_links(@content)
 
       # Extract date and title from filename
       parse_filename!
@@ -208,6 +218,30 @@ module RubyDevMeeting
         .gsub(/&middot;/, '|')                      # html entity to separator
         .gsub(/\s+/, ' ')                           # normalize whitespace
         .strip
+    end
+
+    # Unwrap Google Docs redirect URLs to their real target URLs
+    # https://www.google.com/url?q=REAL_URL&sa=D&... -> REAL_URL
+    def unwrap_google_redirects(content)
+      content.gsub(/https:\/\/www\.google\.com\/url\?q=(.*?)&sa=D[^)\s\]]*/) do
+        URI.decode_www_form_component($1)
+      end
+    end
+
+    # Remove escaped brackets wrapping markdown links (Google Docs artifact)
+    # \[[text](url)\] -> [text](url)
+    def fix_escaped_bracket_links(content)
+      content.gsub(/\\\[(\[[^\]]*\]\([^)]+\))\\\]/) do
+        $1
+      end
+    end
+
+    # Fix unclosed double-bracket links where the second ] is missing
+    # [[Bug #123](url) text -> [[Bug #123]](url) text
+    def fix_unclosed_bracket_links(content)
+      content.gsub(/\[\[((?:Feature|Bug|Misc|Discussion)\s*#\d+)\]\(([^)]+)\)(\s)/) do
+        "[[#{$1}]](#{$2})#{$3}"
+      end
     end
 
     # Normalize alternate ticket link format to standard format
