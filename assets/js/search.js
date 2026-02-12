@@ -63,6 +63,13 @@
       var contentLower = (item.content || '').toLowerCase();
       var ticketStr = (item.tickets || []).join(' ');
 
+      // Exact phrase match bonus (when query has multiple terms)
+      if (terms.length > 1) {
+        if (titleLower.indexOf(q) !== -1) score += 200;
+        if (summaryLower.indexOf(q) !== -1) score += 150;
+        if (contentLower.indexOf(q) !== -1) score += 100;
+      }
+
       terms.forEach(function(term) {
         // Check for ticket number search (e.g., "#12345" or "12345")
         var ticketNum = term.replace(/^#/, '');
