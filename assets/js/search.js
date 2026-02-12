@@ -10,16 +10,17 @@
   var searchToggle = document.getElementById('search-toggle');
   var searchClose = document.getElementById('search-close');
   var searchTriggers = document.querySelectorAll('.search-trigger');
+  var activeIndex = -1;
 
   if (!searchOverlay || !searchInput || !searchResults) return;
 
   // Load search index
   function loadIndex() {
     if (searchIndex) return Promise.resolve(searchIndex);
-    var baseUrl = document.querySelector('link[rel="canonical"]');
     var base = '';
-    if (document.querySelector('meta[name="base-url"]')) {
-      base = document.querySelector('meta[name="base-url"]').getAttribute('content');
+    var baseMeta = document.querySelector('meta[name="base-url"]');
+    if (baseMeta) {
+      base = baseMeta.getAttribute('content');
     }
     return fetch(base + '/search-index.json')
       .then(function(r) { return r.json(); })
@@ -30,6 +31,7 @@
   function openSearch() {
     searchOverlay.classList.remove('hidden');
     searchInput.focus();
+    activeIndex = -1;
     loadIndex();
     document.body.style.overflow = 'hidden';
   }
@@ -40,6 +42,7 @@
     searchInput.value = '';
     searchResults.classList.add('hidden');
     searchResults.innerHTML = '';
+    activeIndex = -1;
     document.body.style.overflow = '';
   }
 
@@ -48,6 +51,7 @@
     if (!searchIndex || !query || query.length < 2) {
       searchResults.classList.add('hidden');
       searchResults.innerHTML = '';
+      activeIndex = -1;
       return;
     }
 
@@ -98,6 +102,7 @@
     results.sort(function(a, b) { return b.score - a.score; });
 
     // Render results
+    activeIndex = -1;
     renderResults(results.slice(0, 20), query);
   }
 
@@ -111,12 +116,15 @@
       return;
     }
 
-    var html = '<div class="space-y-1 search-results-enter">';
-    results.forEach(function(r) {
+    var html = '<div class="space-y-1 search-results-enter" role="listbox" id="search-listbox">';
+    results.forEach(function(r, i) {
       var item = r.item;
       var snippet = cleanSnippet(getSnippet(item.content || item.summary || '', query));
 
-      html += '<a href="' + escapeHtml(item.url) + '" class="block px-4 py-3 rounded-lg hover:bg-[var(--bg-subtle)] no-underline transition-colors">' +
+      html += '<a href="' + escapeHtml(item.url) + '"' +
+        ' class="search-result block px-4 py-3 rounded-lg hover:bg-[var(--bg-subtle)] no-underline transition-colors outline-none focus:bg-[var(--bg-subtle)]"' +
+        ' role="option" data-index="' + i + '"' +
+        ' id="search-result-' + i + '">' +
         '<div class="flex items-start justify-between gap-3">' +
         '<div class="min-w-0">' +
         '<span class="font-medium text-[var(--text-default)]">' + highlightText(escapeHtml(item.title), query) + '</span>' +
@@ -127,9 +135,31 @@
         '</a>';
     });
     html += '</div>';
+    html += '<div class="px-4 py-2 border-t border-[var(--border-subtle)] text-xs text-[var(--text-subtler)] flex items-center gap-3">' +
+      '<span class="inline-flex items-center gap-1"><kbd class="px-1 py-0.5 bg-[var(--bg-subtle)] rounded border border-[var(--border-default)] text-[10px]">&uarr;&darr;</kbd> navigate</span>' +
+      '<span class="inline-flex items-center gap-1"><kbd class="px-1 py-0.5 bg-[var(--bg-subtle)] rounded border border-[var(--border-default)] text-[10px]">&crarr;</kbd> open</span>' +
+      '<span class="inline-flex items-center gap-1"><kbd class="px-1 py-0.5 bg-[var(--bg-subtle)] rounded border border-[var(--border-default)] text-[10px]">esc</kbd> close</span>' +
+      '</div>';
 
     searchResults.classList.remove('hidden');
     searchResults.innerHTML = html;
+  }
+
+  // Clean a snippet of any remaining markdown artifacts
+  function cleanSnippet(text) {
+    return text
+      .replace(/\[{1,2}([^\]]+)\]{1,2}\([^)]*\)/g, '$1')  // [text](url) or [[text]](url)
+      .replace(/\[{1,2}([^\]]+)\]{1,2}/g, '$1')            // [[text]] or [text]
+      .replace(/`([^`]+)`/g, '$1')                          // `code` -> code
+      .replace(/#{1,6}\s*/g, '')                             // heading markers
+      .replace(/\*{1,2}([^*]+)\*{1,2}/g, '$1')             // bold/italic
+      .replace(/_{1,2}([^_]+)_{1,2}/g, '$1')               // bold/italic underscore
+      .replace(/~~([^~]+)~~/g, '$1')                        // strikethrough
+      .replace(/^\s*[-*+]\s+/gm, '')                        // list markers
+      .replace(/^\s*\d+\.\s+/gm, '')                        // numbered list markers
+      .replace(/^>\s*/gm, '')                                // blockquote markers
+      .replace(/\s+/g, ' ')                                  // normalize whitespace
+      .trim();
   }
 
   function getSnippet(content, query) {
@@ -157,23 +187,6 @@
     return snippet;
   }
 
-  // Clean a snippet of any remaining markdown artifacts
-  function cleanSnippet(text) {
-    return text
-      .replace(/\[{1,2}([^\]]+)\]{1,2}\([^)]*\)/g, '$1')  // [text](url) or [[text]](url)
-      .replace(/\[{1,2}([^\]]+)\]{1,2}/g, '$1')            // [[text]] or [text]
-      .replace(/`([^`]+)`/g, '$1')                          // `code` -> code
-      .replace(/#{1,6}\s*/g, '')                             // heading markers
-      .replace(/\*{1,2}([^*]+)\*{1,2}/g, '$1')             // bold/italic
-      .replace(/_{1,2}([^_]+)_{1,2}/g, '$1')               // bold/italic underscore
-      .replace(/~~([^~]+)~~/g, '$1')                        // strikethrough
-      .replace(/^\s*[-*+]\s+/gm, '')                        // list markers
-      .replace(/^\s*\d+\.\s+/gm, '')                        // numbered list markers
-      .replace(/^>\s*/gm, '')                                // blockquote markers
-      .replace(/\s+/g, ' ')                                  // normalize whitespace
-      .trim();
-  }
-
   function highlightText(text, query) {
     var terms = query.split(/\s+/).filter(function(t) { return t.length >= 2; });
     terms.forEach(function(term) {
@@ -186,6 +199,42 @@
   function escapeHtml(str) {
     if (!str) return '';
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // Keyboard navigation for search results
+  function getResultElements() {
+    return searchResults.querySelectorAll('.search-result');
+  }
+
+  function setActiveResult(index) {
+    var results = getResultElements();
+    if (results.length === 0) return;
+
+    // Remove active state from all
+    results.forEach(function(el) {
+      el.classList.remove('bg-[var(--bg-subtle)]');
+      el.removeAttribute('aria-selected');
+    });
+
+    // Clamp index
+    if (index < 0) index = results.length - 1;
+    if (index >= results.length) index = 0;
+    activeIndex = index;
+
+    // Apply active state
+    var active = results[activeIndex];
+    active.classList.add('bg-[var(--bg-subtle)]');
+    active.setAttribute('aria-selected', 'true');
+    active.scrollIntoView({ block: 'nearest' });
+    searchInput.setAttribute('aria-activedescendant', active.id);
+  }
+
+  function navigateToActive() {
+    var results = getResultElements();
+    if (activeIndex >= 0 && activeIndex < results.length) {
+      var url = results[activeIndex].getAttribute('href');
+      if (url) window.location.href = url;
+    }
   }
 
   // Debounce
@@ -223,16 +272,56 @@
 
   // Keyboard shortcuts
   document.addEventListener('keydown', function(e) {
-    // "/" to open search
-    if (e.key === '/' && !searchOverlay.classList.contains('hidden') === false) {
+    var isSearchOpen = !searchOverlay.classList.contains('hidden');
+
+    // "/" to open search (when not already in an input)
+    if (e.key === '/' && !isSearchOpen) {
       var active = document.activeElement;
       if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) return;
       e.preventDefault();
       openSearch();
+      return;
     }
+
+    if (!isSearchOpen) return;
+
+    // Arrow down - move to next result
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setActiveResult(activeIndex + 1);
+      return;
+    }
+
+    // Arrow up - move to previous result
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (activeIndex <= 0) {
+        // Return focus to input when going above first result
+        activeIndex = -1;
+        var results = getResultElements();
+        results.forEach(function(el) {
+          el.classList.remove('bg-[var(--bg-subtle)]');
+          el.removeAttribute('aria-selected');
+        });
+        searchInput.removeAttribute('aria-activedescendant');
+        searchInput.focus();
+      } else {
+        setActiveResult(activeIndex - 1);
+      }
+      return;
+    }
+
+    // Enter - navigate to active result
+    if (e.key === 'Enter' && activeIndex >= 0) {
+      e.preventDefault();
+      navigateToActive();
+      return;
+    }
+
     // Escape to close
-    if (e.key === 'Escape' && !searchOverlay.classList.contains('hidden')) {
+    if (e.key === 'Escape') {
       closeSearch();
+      return;
     }
   });
 
