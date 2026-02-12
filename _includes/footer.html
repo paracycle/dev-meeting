@@ -1,0 +1,39 @@
+<footer class="bg-gold-150 dark:bg-stone-800 mt-12 border-t border-[var(--border-default)]">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+    <div class="flex flex-col md:flex-row justify-between items-start gap-6">
+      <div>
+        <div class="flex items-center gap-2 mb-3">
+          <svg viewBox="0 0 24 24" class="h-6 w-6 text-ruby-600 dark:text-ruby-400" fill="currentColor">
+            <path d="M20.156.083c3.033.525 3.893 2.598 3.829 4.77L24 4.822 22.635 22.71 4.89 23.926h.016C3.433 23.864.15 22.457 0 19.175v.015c.005-.291.018-.543.046-.758C.566 14.795 5.602 12.28 7.776 11.07c.376-.21.681-.39.894-.539l.089-.065a5.1 5.1 0 0 0 .192-.142l.019-.023c2.347-2.89 2.037-6.716 1.904-8.072a.108.108 0 0 1-.003-.024 3.561 3.561 0 0 0-.057-.552c-.064-.376-.21-.87-.607-1.199C10.703.085 11.262 0 11.821 0c3.012 0 6.563 0 8.336.083Z"/>
+          </svg>
+          <span class="font-bold text-[var(--text-default)]">Ruby Dev Meeting Archive</span>
+        </div>
+        <p class="text-sm text-[var(--text-subtle)] max-w-md">
+          Meeting logs from the Ruby core developers' meetings.
+          Sourced from
+          <a href="https://github.com/ruby/dev-meeting-log" class="text-ruby-600 dark:text-ruby-400 hover:underline">ruby/dev-meeting-log</a>.
+        </p>
+      </div>
+      <div class="flex flex-col sm:flex-row gap-6 text-sm">
+        <div>
+          <h4 class="font-bold text-[var(--text-default)] mb-2">Resources</h4>
+          <ul class="space-y-1.5 text-[var(--text-subtle)]">
+            <li><a href="https://www.ruby-lang.org" class="hover:text-ruby-600 dark:hover:text-ruby-400">ruby-lang.org</a></li>
+            <li><a href="https://bugs.ruby-lang.org" class="hover:text-ruby-600 dark:hover:text-ruby-400">Bug Tracker</a></li>
+            <li><a href="https://github.com/ruby/ruby" class="hover:text-ruby-600 dark:hover:text-ruby-400">Ruby on GitHub</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-bold text-[var(--text-default)] mb-2">Navigation</h4>
+          <ul class="space-y-1.5 text-[var(--text-subtle)]">
+            <li><a href="{{ '/' | relative_url }}" class="hover:text-ruby-600 dark:hover:text-ruby-400">Home</a></li>
+            <li><a href="{{ '/archive/' | relative_url }}" class="hover:text-ruby-600 dark:hover:text-ruby-400">Archive</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="mt-8 pt-6 border-t border-[var(--border-default)] text-center text-xs text-[var(--text-subtler)]">
+      Built with Jekyll. Content licensed under the Ruby license.
+    </div>
+  </div>
+</footer>

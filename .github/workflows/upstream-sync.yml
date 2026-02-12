@@ -1,0 +1,92 @@
+name: Sync Upstream and Deploy
+
+on:
+  # Run every 6 hours
+  schedule:
+    - cron: '0 */6 * * *'
+  # Allow manual trigger
+  workflow_dispatch:
+  # Also rebuild on pushes to main
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  sync-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check for upstream changes
+        id: check
+        run: |
+          # If dev-meeting-log doesn't exist yet, clone it
+          if [ ! -d "dev-meeting-log" ]; then
+            git clone https://github.com/ruby/dev-meeting-log.git
+            echo "changes=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          cd dev-meeting-log
+          git fetch origin
+
+          LOCAL=$(git rev-parse HEAD)
+          REMOTE=$(git rev-parse origin/master 2>/dev/null || git rev-parse origin/main 2>/dev/null)
+
+          if [ "$LOCAL" != "$REMOTE" ]; then
+            echo "Upstream has changes: $LOCAL -> $REMOTE"
+            git pull origin master 2>/dev/null || git pull origin main 2>/dev/null
+            echo "changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "No upstream changes"
+            echo "changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Ruby
+        if: steps.check.outputs.changes == 'true' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+
+      - name: Build Jekyll site
+        if: steps.check.outputs.changes == 'true' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        run: |
+          bundle exec jekyll build
+        env:
+          JEKYLL_ENV: production
+
+      - name: Upload artifact
+        if: steps.check.outputs.changes == 'true' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site/
+
+      - name: Commit updated submodule
+        if: steps.check.outputs.changes == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add dev-meeting-log
+          git diff --staged --quiet || git commit -m "chore: sync upstream dev-meeting-log"
+          git push || true
+
+  deploy:
+    needs: sync-and-build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

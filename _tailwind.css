@@ -1,0 +1,247 @@
+@import "tailwindcss";
+
+@theme {
+  /* Ruby brand colors */
+  --color-ruby-50: #fdeae9;
+  --color-ruby-100: #fadad3;
+  --color-ruby-200: #f8bfbd;
+  --color-ruby-300: #f5a9a7;
+  --color-ruby-400: #f07f7b;
+  --color-ruby-500: #eb544f;
+  --color-ruby-600: #e62923;
+  --color-ruby-700: #b8211c;
+  --color-ruby-800: #8a1915;
+  --color-ruby-900: #5c100e;
+
+  /* Gold/Cream accent colors */
+  --color-gold-50: #FAF7F1;
+  --color-gold-100: #F6F3EB;
+  --color-gold-150: #F1EEE4;
+  --color-gold-200: #EDE9DD;
+  --color-gold-300: #ebe5d5;
+  --color-gold-400: #E2D1AA;
+  --color-gold-500: #D8C28E;
+  --color-gold-600: #CEB372;
+  --color-gold-700: #A8925C;
+  --color-gold-800: #837147;
+  --color-gold-900: #5D5131;
+
+  /* Font families */
+  --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+/* ============================================
+   CSS Variables for light/dark mode
+   ============================================ */
+:root {
+  --bg-default: #ffffff;
+  --bg-subtle: #f5f5f4;
+  --bg-subtler: #e7e5e4;
+  --text-default: #1c1917;
+  --text-secondary: #44403c;
+  --text-subtle: #78716c;
+  --text-subtler: #a8a29e;
+  --text-link: #e62923;
+  --text-link-hover: #b8211c;
+  --border-default: #d6d3d1;
+  --border-subtle: #e7e5e4;
+  --code-bg: #f5f5f4;
+  --code-text: #1c1917;
+  --code-blue: #1d4ed8;
+  --code-green: #047857;
+  --code-orange: #d97706;
+  --code-purple: #7e22ce;
+  --code-red: #dc2626;
+}
+
+.dark {
+  --bg-default: #1c1917;
+  --bg-subtle: #292524;
+  --bg-subtler: #44403c;
+  --text-default: #fafaf9;
+  --text-secondary: #d6d3d1;
+  --text-subtle: #a8a29e;
+  --text-subtler: #78716c;
+  --text-link: #eb544f;
+  --text-link-hover: #f07f7b;
+  --border-default: #44403c;
+  --border-subtle: #292524;
+  --code-bg: #292524;
+  --code-text: #fafaf9;
+  --code-blue: #60a5fa;
+  --code-green: #34d399;
+  --code-orange: #fbbf24;
+  --code-purple: #c084fc;
+  --code-red: #f87171;
+}
+
+/* ============================================
+   Base styles
+   ============================================ */
+body {
+  background-color: var(--bg-default);
+  color: var(--text-default);
+  font-family: var(--font-sans);
+  line-height: 1.7;
+}
+
+a {
+  color: var(--text-link);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: text-decoration-color 0.15s ease;
+}
+a:hover {
+  color: var(--text-link-hover);
+  text-decoration-color: currentColor;
+}
+
+/* ============================================
+   Meeting content prose styles
+   ============================================ */
+.meeting-content h1 {
+  font-size: 1.875rem;
+  font-weight: 800;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  color: var(--text-default);
+  line-height: 1.3;
+}
+.meeting-content h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.375rem;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-default);
+}
+.meeting-content h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-default);
+}
+.meeting-content h4 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-secondary);
+}
+.meeting-content p {
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+}
+.meeting-content ul, .meeting-content ol {
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+.meeting-content ul { list-style-type: disc; }
+.meeting-content ol { list-style-type: decimal; }
+.meeting-content li {
+  margin-bottom: 0.25rem;
+  color: var(--text-secondary);
+}
+.meeting-content pre {
+  background-color: var(--code-bg);
+  color: var(--code-text);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  border: 1px solid var(--border-subtle);
+}
+.meeting-content code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+}
+.meeting-content :not(pre) > code {
+  background-color: var(--code-bg);
+  color: var(--code-text);
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  border: 1px solid var(--border-subtle);
+}
+.meeting-content blockquote {
+  border-left: 4px solid var(--color-ruby-600);
+  padding: 0.5rem 1rem;
+  margin-bottom: 1rem;
+  background-color: var(--bg-subtle);
+  border-radius: 0 0.375rem 0.375rem 0;
+}
+.meeting-content blockquote p {
+  margin-bottom: 0;
+}
+.meeting-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+}
+.meeting-content th, .meeting-content td {
+  border: 1px solid var(--border-default);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+.meeting-content th {
+  background-color: var(--bg-subtle);
+  font-weight: 600;
+}
+.meeting-content hr {
+  border: none;
+  border-top: 1px solid var(--border-default);
+  margin: 2rem 0;
+}
+.meeting-content a {
+  color: var(--text-link);
+  text-decoration: underline;
+}
+.meeting-content a:hover {
+  color: var(--text-link-hover);
+}
+
+/* ============================================
+   Rouge syntax highlighting
+   ============================================ */
+.highlight .k, .highlight .kd, .highlight .kn,
+.highlight .kp, .highlight .kr, .highlight .kt { color: var(--code-purple); font-weight: bold; }
+.highlight .s, .highlight .s1, .highlight .s2,
+.highlight .sh, .highlight .sx { color: var(--code-green); }
+.highlight .c, .highlight .c1, .highlight .cm,
+.highlight .cs { color: var(--text-subtle); font-style: italic; }
+.highlight .nb, .highlight .nc, .highlight .nf,
+.highlight .nn { color: var(--code-blue); }
+.highlight .mi, .highlight .mf, .highlight .mh,
+.highlight .mo, .highlight .il { color: var(--code-orange); }
+.highlight .o, .highlight .ow { color: var(--code-red); }
+.highlight .ss { color: var(--code-red); }
+.highlight .p { color: var(--code-text); }
+
+/* ============================================
+   Search highlight
+   ============================================ */
+mark {
+  background-color: #fef08a;
+  color: #1c1917;
+  padding: 0 0.125rem;
+  border-radius: 0.125rem;
+}
+.dark mark {
+  background-color: #854d0e;
+  color: #fef9c3;
+}
+
+/* ============================================
+   Utilities
+   ============================================ */
+.search-results-enter {
+  animation: fadeSlideIn 0.15s ease-out;
+}
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}

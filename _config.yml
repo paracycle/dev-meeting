@@ -1,0 +1,34 @@
+title: "Ruby Dev Meeting Archive"
+description: "Archive of Ruby core developer meeting logs"
+url: ""
+baseurl: ""
+
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    block:
+      line_numbers: false
+
+plugins:
+  - jekyll-seo-tag
+  - jekyll-sitemap
+  - jekyll-tailwindcss
+
+exclude:
+  - dev-meeting-log/.git
+  - ruby-homepage
+  - Gemfile
+  - Gemfile.lock
+  - PLAN.md
+  - node_modules
+  - vendor
+
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: "default"
+
+meeting_log_path: "dev-meeting-log"

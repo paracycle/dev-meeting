@@ -1,0 +1,111 @@
+---
+layout: default
+---
+
+{% assign meeting = page.meeting %}
+
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+  <!-- Breadcrumb -->
+  <nav class="flex items-center gap-2 text-sm text-[var(--text-subtle)] mb-6 flex-wrap">
+    <a href="{{ '/' | relative_url }}" class="hover:text-ruby-600 dark:hover:text-ruby-400">Home</a>
+    <span class="material-symbols-rounded text-base">chevron_right</span>
+    <a href="{{ '/meetings/' | append: meeting.year | append: '/' | relative_url }}" class="hover:text-ruby-600 dark:hover:text-ruby-400">{{ meeting.year }}</a>
+    <span class="material-symbols-rounded text-base">chevron_right</span>
+    <span class="text-[var(--text-default)]">{{ meeting.title }}</span>
+  </nav>
+
+  <!-- Header -->
+  <header class="mb-8">
+    <h1 class="text-3xl md:text-4xl font-extrabold text-[var(--text-default)] mb-3">
+      {{ meeting.title }}
+    </h1>
+
+    <div class="flex flex-wrap items-center gap-4 text-sm text-[var(--text-subtle)]">
+      {% if meeting.date_formatted %}
+      <span class="flex items-center gap-1">
+        <span class="material-symbols-rounded text-base">calendar_today</span>
+        {{ meeting.date_formatted }}
+      </span>
+      {% endif %}
+
+      {% if meeting.ticket_count > 0 %}
+      <span class="flex items-center gap-1">
+        <span class="material-symbols-rounded text-base">confirmation_number</span>
+        {{ meeting.ticket_count }} ticket{{ meeting.ticket_count | minus: 1 | at_least: 1 }}{% if meeting.ticket_count != 1 %}s{% endif %} discussed
+      </span>
+      {% endif %}
+
+      {% if meeting.lang %}
+      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium
+        {% if meeting.lang == 'ja' %}bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200
+        {% else %}bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200{% endif %}">
+        {% if meeting.lang == "ja" %}日本語{% else %}English{% endif %}
+      </span>
+      {% endif %}
+    </div>
+
+    <!-- Language Toggle -->
+    {% if meeting.has_language_pair %}
+    <div class="mt-4 inline-flex items-center gap-2 bg-[var(--bg-subtle)] border border-[var(--border-default)] rounded-lg px-4 py-2 text-sm">
+      <span class="material-symbols-rounded text-base text-[var(--text-subtle)]">translate</span>
+      <span class="text-[var(--text-subtle)]">Also available in:</span>
+      <a href="{{ meeting.language_pair_url | relative_url }}"
+         class="font-medium text-ruby-600 dark:text-ruby-400 hover:text-ruby-700 dark:hover:text-ruby-300">
+        {% if meeting.language_pair_lang == "ja" %}日本語{% else %}English{% endif %}
+      </a>
+    </div>
+    {% endif %}
+  </header>
+
+  <!-- Meeting Content -->
+  <article class="meeting-content">
+    {{ page.meeting_content | markdownify }}
+  </article>
+
+  <!-- Navigation -->
+  {% assign all_meetings = site.data.meetings %}
+  {% assign current_url = meeting.url %}
+  {% assign prev_meeting = nil %}
+  {% assign next_meeting = nil %}
+  {% assign found = false %}
+
+  {% for m in all_meetings %}
+    {% if found and next_meeting == nil %}
+      {% assign next_meeting = m %}
+    {% endif %}
+    {% if m.url == current_url %}
+      {% assign found = true %}
+    {% endif %}
+    {% unless found %}
+      {% assign prev_meeting = m %}
+    {% endunless %}
+  {% endfor %}
+
+  <nav class="mt-12 pt-8 border-t border-[var(--border-default)] flex justify-between items-start gap-4">
+    {% if prev_meeting %}
+    <a href="{{ prev_meeting.url | relative_url }}"
+       class="group flex items-center gap-2 text-sm no-underline text-[var(--text-subtle)] hover:text-ruby-600 dark:hover:text-ruby-400 max-w-[45%]">
+      <span class="material-symbols-rounded text-xl transition-transform group-hover:-translate-x-1">arrow_back</span>
+      <div>
+        <span class="block text-xs uppercase tracking-wide">Newer</span>
+        <span class="block font-medium text-[var(--text-default)] group-hover:text-ruby-600 dark:group-hover:text-ruby-400">{{ prev_meeting.title }}</span>
+      </div>
+    </a>
+    {% else %}
+    <div></div>
+    {% endif %}
+
+    {% if next_meeting %}
+    <a href="{{ next_meeting.url | relative_url }}"
+       class="group flex items-center gap-2 text-sm no-underline text-[var(--text-subtle)] hover:text-ruby-600 dark:hover:text-ruby-400 text-right max-w-[45%]">
+      <div>
+        <span class="block text-xs uppercase tracking-wide">Older</span>
+        <span class="block font-medium text-[var(--text-default)] group-hover:text-ruby-600 dark:group-hover:text-ruby-400">{{ next_meeting.title }}</span>
+      </div>
+      <span class="material-symbols-rounded text-xl transition-transform group-hover:translate-x-1">arrow_forward</span>
+    </a>
+    {% else %}
+    <div></div>
+    {% endif %}
+  </nav>
+</div>

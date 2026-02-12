@@ -1,0 +1,67 @@
+---
+layout: default
+title: Archive
+---
+
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+  <!-- Breadcrumb -->
+  <nav class="flex items-center gap-2 text-sm text-[var(--text-subtle)] mb-6">
+    <a href="{{ '/' | relative_url }}" class="hover:text-ruby-600 dark:hover:text-ruby-400">Home</a>
+    <span class="material-symbols-rounded text-base">chevron_right</span>
+    <span class="text-[var(--text-default)]">Archive</span>
+  </nav>
+
+  <header class="mb-8">
+    <h1 class="text-3xl md:text-4xl font-extrabold text-[var(--text-default)] mb-2">
+      Complete Archive
+    </h1>
+    <p class="text-lg text-[var(--text-subtle)]">
+      All {{ site.data.total_meetings }} Ruby developer meeting logs
+    </p>
+  </header>
+
+  {% include search-bar.html %}
+
+  {% for year_group in site.data.meetings_by_year %}
+  <section class="mt-10">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-2xl font-bold text-[var(--text-default)] flex items-center gap-2">
+        <a href="{{ '/meetings/' | append: year_group.year | append: '/' | relative_url }}"
+           class="hover:text-ruby-600 dark:hover:text-ruby-400 no-underline">
+          {{ year_group.year }}
+        </a>
+        <span class="text-sm font-normal text-[var(--text-subtle)]">
+          ({{ year_group.count }} meeting{% if year_group.count != 1 %}s{% endif %})
+        </span>
+      </h2>
+      <a href="{{ '/meetings/' | append: year_group.year | append: '/' | relative_url }}"
+         class="text-sm text-ruby-600 dark:text-ruby-400 hover:underline no-underline">
+        View all &rarr;
+      </a>
+    </div>
+    <div class="grid gap-2">
+      {% for meeting in year_group.meetings %}
+      <a href="{{ meeting.url | relative_url }}"
+         class="group flex items-center justify-between gap-4 px-4 py-3 rounded-lg border border-[var(--border-subtle)] hover:border-ruby-500 hover:bg-[var(--bg-subtle)] transition-all no-underline">
+        <div class="flex items-center gap-3 min-w-0">
+          <span class="font-medium text-[var(--text-default)] group-hover:text-ruby-600 dark:group-hover:text-ruby-400 transition-colors">
+            {{ meeting.title }}
+          </span>
+          {% if meeting.lang == "ja" %}
+          <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200 flex-shrink-0">
+            JA
+          </span>
+          {% endif %}
+        </div>
+        <div class="flex items-center gap-3 text-sm text-[var(--text-subtle)] flex-shrink-0">
+          {% if meeting.ticket_count > 0 %}
+          <span>{{ meeting.ticket_count }} tickets</span>
+          {% endif %}
+          <span>{{ meeting.date_formatted }}</span>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+</div>

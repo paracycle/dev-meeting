@@ -1,0 +1,75 @@
+---
+layout: default
+---
+
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+  <!-- Breadcrumb -->
+  <nav class="flex items-center gap-2 text-sm text-[var(--text-subtle)] mb-6">
+    <a href="{{ '/' | relative_url }}" class="hover:text-ruby-600 dark:hover:text-ruby-400">Home</a>
+    <span class="material-symbols-rounded text-base">chevron_right</span>
+    <span class="text-[var(--text-default)]">{{ page.year }}</span>
+  </nav>
+
+  <!-- Header -->
+  <header class="mb-8">
+    <h1 class="text-3xl md:text-4xl font-extrabold text-[var(--text-default)] mb-2">
+      {{ page.year }} Developer Meetings
+    </h1>
+    <p class="text-lg text-[var(--text-subtle)]">
+      {{ page.meeting_count }} meeting{{ page.meeting_count | minus: 1 | at_least: 1 }}{% if page.meeting_count != 1 %}s{% endif %} held this year
+    </p>
+  </header>
+
+  <!-- Year Navigation -->
+  {% assign years = site.data.years %}
+  {% assign current_year = page.year %}
+  {% assign prev_year = nil %}
+  {% assign next_year = nil %}
+  {% assign found = false %}
+  {% for y in years %}
+    {% if found and next_year == nil %}
+      {% assign next_year = y %}
+    {% endif %}
+    {% if y.year == current_year %}
+      {% assign found = true %}
+    {% endif %}
+    {% unless found %}
+      {% assign prev_year = y %}
+    {% endunless %}
+  {% endfor %}
+
+  <div class="flex items-center gap-4 mb-8 text-sm">
+    {% if prev_year %}
+    <a href="{{ '/meetings/' | append: prev_year.year | append: '/' | relative_url }}"
+       class="inline-flex items-center gap-1 text-[var(--text-subtle)] hover:text-ruby-600 dark:hover:text-ruby-400 no-underline">
+      <span class="material-symbols-rounded text-base">arrow_back</span>
+      {{ prev_year.year }}
+    </a>
+    {% endif %}
+    {% if next_year %}
+    <a href="{{ '/meetings/' | append: next_year.year | append: '/' | relative_url }}"
+       class="inline-flex items-center gap-1 text-[var(--text-subtle)] hover:text-ruby-600 dark:hover:text-ruby-400 no-underline">
+      {{ next_year.year }}
+      <span class="material-symbols-rounded text-base">arrow_forward</span>
+    </a>
+    {% endif %}
+  </div>
+
+  <!-- Meetings by Month -->
+  {% for month_group in page.meetings_by_month %}
+  <section class="mb-8">
+    <h2 class="text-xl font-bold text-[var(--text-default)] mb-4 flex items-center gap-2">
+      <span class="material-symbols-rounded text-ruby-600 dark:text-ruby-400">event</span>
+      {{ month_group.month_name }}
+      <span class="text-sm font-normal text-[var(--text-subtle)]">
+        ({{ month_group.meetings | size }} meeting{{ month_group.meetings | size | minus: 1 | at_least: 1 }}{% if month_group.meetings.size != 1 %}s{% endif %})
+      </span>
+    </h2>
+    <div class="grid gap-3">
+      {% for meeting in month_group.meetings %}
+        {% include meeting-card.html meeting=meeting %}
+      {% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+</div>
