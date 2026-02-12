@@ -87,10 +87,6 @@
         // Content match
         if (contentLower.indexOf(term) !== -1) {
           score += 10;
-          // Bonus for multiple occurrences
-          var regex = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-          var matches = contentLower.match(regex);
-          if (matches) score += Math.min(matches.length, 5) * 2;
         }
 
         // Year match
@@ -98,12 +94,26 @@
       });
 
       if (score > 0) {
+        // Recency bonus: newer meetings score higher among similar results.
+        // Range is 0–15 points, scaling linearly from 2008 to 2026.
+        // This ensures a 2025 result beats a 2021 result with the same
+        // relevance match, without overwhelming major relevance gaps
+        // like title vs content-only matches.
+        var dateStr = item.date || '2008-01-01';
+        var year = parseInt(dateStr.substring(0, 4), 10) || 2008;
+        var month = parseInt(dateStr.substring(5, 7), 10) || 1;
+        var recency = ((year - 2008) * 12 + month) / (19 * 12) * 15;
+        score += recency;
+
         results.push({ item: item, score: score });
       }
     });
 
-    // Sort by score descending
-    results.sort(function(a, b) { return b.score - a.score; });
+    // Sort by score descending, then by date (newer first) as tiebreaker
+    results.sort(function(a, b) {
+      if (b.score !== a.score) return b.score - a.score;
+      return (b.item.date || '').localeCompare(a.item.date || '');
+    });
 
     // Render results
     activeIndex = -1;
