@@ -35,7 +35,7 @@ jobs:
           git fetch --unshallow origin || git fetch origin
 
           LOCAL=$(git rev-parse HEAD)
-          REMOTE=$(git rev-parse origin/master 2>/dev/null || git rev-parse origin/main 2>/dev/null)
+          REMOTE=$(git rev-parse origin/master)
 
           if [ "$LOCAL" != "$REMOTE" ]; then
             echo "Upstream has changes: $LOCAL -> $REMOTE"
