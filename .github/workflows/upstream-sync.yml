@@ -11,7 +11,7 @@ on:
     branches: [main]
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
@@ -25,55 +25,26 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          submodules: true
 
-      - name: Check for upstream changes
-        id: check
+      - name: Fetch latest upstream content
         run: |
-          cd dev-meeting-log
-          git fetch --unshallow origin || git fetch origin
-
-          LOCAL=$(git rev-parse HEAD)
-          REMOTE=$(git rev-parse origin/master)
-
-          if [ "$LOCAL" != "$REMOTE" ]; then
-            echo "Upstream has changes: $LOCAL -> $REMOTE"
-            git checkout "$REMOTE"
-            echo "changes=true" >> $GITHUB_OUTPUT
-          else
-            echo "No upstream changes"
-            echo "changes=false" >> $GITHUB_OUTPUT
-          fi
+          git clone --depth 1 https://github.com/ruby/dev-meeting-log.git dev-meeting-log
 
       - name: Setup Ruby
-        if: steps.check.outputs.changes == 'true' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.3'
           bundler-cache: true
 
       - name: Build Jekyll site
-        if: steps.check.outputs.changes == 'true' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-        run: |
-          bundle exec jekyll build
+        run: bundle exec jekyll build
         env:
           JEKYLL_ENV: production
 
       - name: Upload artifact
-        if: steps.check.outputs.changes == 'true' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         uses: actions/upload-pages-artifact@v3
         with:
           path: _site/
-
-      - name: Commit updated submodule
-        if: steps.check.outputs.changes == 'true'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add dev-meeting-log
-          git diff --staged --quiet || git commit -m "chore: sync upstream dev-meeting-log"
-          git push || true
 
   deploy:
     needs: sync-and-build
