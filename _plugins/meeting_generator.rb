@@ -393,6 +393,18 @@ module RubyDevMeeting
       # Group by year
       by_year = meetings.group_by(&:year).sort_by(&:first).reverse
 
+      # Read the upstream source repo SHA
+      source_sha = resolve_source_sha(log_path)
+      site.data["source_sha"] = source_sha
+      site.data["source_sha_short"] = source_sha ? source_sha[0..6] : nil
+      Jekyll.logger.info "MeetingGenerator:", "Source SHA: #{source_sha || 'unknown'}"
+
+      # Generate a .source-sha file so CI can skip rebuilds when upstream hasn't changed
+      sha_page = Jekyll::PageWithoutAFile.new(site, site.source, "", ".source-sha")
+      sha_page.content = source_sha || "unknown"
+      sha_page.data["layout"] = nil
+      site.pages << sha_page
+
       # Store data for use in templates
       site.data["meetings"] = all_sorted.map(&:to_liquid)
       site.data["meetings_by_year"] = by_year.map { |year, ms|
@@ -470,6 +482,14 @@ module RubyDevMeeting
           ja_meeting.language_pair = en_meeting.url
         end
       end
+    end
+
+    def resolve_source_sha(log_path)
+      git_dir = File.join(log_path, ".git")
+      return nil unless File.exist?(git_dir)
+
+      sha = `git -C #{log_path} rev-parse HEAD 2>/dev/null`.strip
+      sha.empty? ? nil : sha
     end
 
     def generate_search_index(site, meetings)

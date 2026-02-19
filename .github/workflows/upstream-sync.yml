@@ -14,6 +14,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  actions: write
 
 concurrency:
   group: "pages"
@@ -22,6 +23,9 @@ concurrency:
 jobs:
   sync-and-build:
     runs-on: ubuntu-latest
+    outputs:
+      skipped: ${{ steps.check-sha.outputs.skipped }}
+      upstream_sha: ${{ steps.upstream-sha.outputs.sha }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -30,24 +34,61 @@ jobs:
         run: |
           git clone --depth 1 https://github.com/ruby/dev-meeting-log.git dev-meeting-log
 
+      - name: Get upstream SHA
+        id: upstream-sha
+        run: |
+          SHA=$(git -C dev-meeting-log rev-parse HEAD)
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "Upstream SHA: $SHA"
+
+      - name: Restore cached source SHA
+        id: restore-sha
+        if: github.event_name == 'schedule'
+        uses: actions/cache/restore@v4
+        with:
+          path: .deployed-sha
+          key: deployed-source-sha
+
+      - name: Check if rebuild is needed
+        id: check-sha
+        if: github.event_name == 'schedule'
+        run: |
+          DEPLOYED_SHA=""
+          if [ -f .deployed-sha ]; then
+            DEPLOYED_SHA=$(cat .deployed-sha)
+          fi
+          echo "Deployed SHA: ${DEPLOYED_SHA:-none}"
+
+          if [ "${{ steps.upstream-sha.outputs.sha }}" = "$DEPLOYED_SHA" ]; then
+            echo "Upstream unchanged, skipping rebuild"
+            echo "skipped=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Upstream changed, rebuilding"
+            echo "skipped=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Setup Ruby
+        if: steps.check-sha.outputs.skipped != 'true'
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.3'
           bundler-cache: true
 
       - name: Build Jekyll site
+        if: steps.check-sha.outputs.skipped != 'true'
         run: bundle exec jekyll build
         env:
           JEKYLL_ENV: production
 
       - name: Upload artifact
+        if: steps.check-sha.outputs.skipped != 'true'
         uses: actions/upload-pages-artifact@v3
         with:
           path: _site/
 
   deploy:
     needs: sync-and-build
+    if: needs.sync-and-build.outputs.skipped != 'true'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -56,3 +97,16 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Delete old source SHA cache
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh cache delete deployed-source-sha --repo ${{ github.repository }} || true
+          echo "${{ needs.sync-and-build.outputs.upstream_sha }}" > .deployed-sha
+
+      - name: Save source SHA to cache
+        uses: actions/cache/save@v4
+        with:
+          path: .deployed-sha
+          key: deployed-source-sha

@@ -34,6 +34,12 @@
       Built with Jekyll.
       <a href="{{ site.github_repo }}" class="text-ruby-600 dark:text-ruby-400 hover:underline">Source on GitHub</a>.
       Content licensed under the Ruby license.
+      {% if site.data.source_sha_short %}
+      <br class="sm:hidden">
+      <span class="hidden sm:inline">&middot;</span>
+      Source data:
+      <a href="https://github.com/ruby/dev-meeting-log/commit/{{ site.data.source_sha }}" class="text-ruby-600 dark:text-ruby-400 hover:underline font-mono">{{ site.data.source_sha_short }}</a>
+      {% endif %}
     </div>
   </div>
 </footer>
